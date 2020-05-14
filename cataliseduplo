@@ -1,5 +1,5 @@
 (*  FeedBack Control Circuits 30/04/2020 
-Catálise: u -> u + y *)
+Catálise: u -> u + x *)
 (* chamar tudo o que antes era X de u, chamar que antes Y por X*)
 (* LBS: directive sample 720000.0 10000 *)
 
@@ -7,7 +7,8 @@ directive simulation {
     initial=0;                   // Initial simulation time (default 0)
     final=10000;                 // Final simulation time (200 horas)
     points=10000;                // Number of simulation points to plot (default 1000)
-    plots=[<uh u1^ u2 u3^>;<xh x1_^ x2_ x3_^>]; 
+    plots=[<uh_ u1_^ u2_ u3_^>;<xh x1_^ x2_ x3_^>]; //Plot Catalisys_
+    plots=[<uh u1^ u2 u3^>;<xh x1^ x2 x3^>]; //Plot catalysis
                        // Species to plot. Plots all species if empty ([])
     kinetics = Contextual; 
 }
@@ -42,6 +43,8 @@ dom x1 = {bind=tb;unbind=tub;colour="green"}
 dom x3 = {bind=tb;unbind=tub;colour="green"}
 
 (* Domains Catálise- *)
+dom u1_ = {bind=tb;unbind=tub;colour="red"}
+dom u3_ = {bind=tb;unbind=tub;colour="red"}
 dom x1_ = {bind=tb;unbind=tub;colour="green"}
 dom x3_ = {bind=tb;unbind=tub;colour="green"}
 
@@ -50,11 +53,14 @@ def Catalysis_a(N, u2, xh, uh) = N * {u1^(c)*}[u2 u3^]<xh x1^ uh u1^>
 def Catalysis_b(N, xh, x2, uh, u2) = N * {u3^*}[xh x1^]<x2 x3^>:[uh u1^]<u2 u3^>     
 
 (* Catalysis Catálise-*)
-def Catalysis_a_(N, u2, xh, uh) = N * {u1^(c)*}[u2 u3^]<xh x1_^ uh u1^>    
-def Catalysis_b_(N, xh, x2_, uh, u2) = N * {u3^*}[xh x1_^]<x2_ x3_^>:[uh u1^]<u2 u3^>
+def Catalysis_a_(N, u2_, xh, uh_) = N * {u1_^(c)*}[u2_ u3_^]<xh x1_^ uh_ u1_^>    
+def Catalysis_b_(N, xh, x2_, uh_, u2_) = N * {u3_^*}[xh x1_^]<x2_ x3_^>:[uh_ u1_^]<u2_ u3_^>
 
-(* Entradas Catálise+-*)
+(* Entradas Catálise+*)
 def U(N, uh, u2) = N * <uh u1^ u2 u3^>
+
+(* Entradas Catálise-*)
+def U_(N, uh_, u2_) = N * <uh_ u1_^ u2_ u3_^>
 
 (* Espécies Catálise +*)
 def X(N, xh, x2) = N * <xh x1^ x2 x3^>
@@ -74,11 +80,11 @@ def Catalysis(Cmax, cx, uh, xh, u2, x2) =
 
 (* Catalysis - block *)
 
-def Catalysis_(Cmax, cx, uh, xh, u2, x2_) =
+def Catalysis_(Cmax, cx, uh_, xh, u2_, x2_) =
 (       
-        Catalysis_a_(Cmax, u2, xh, uh)
-    |   Catalysis_b_(Cmax, xh, x2_, uh, u2)
-    |   U(cx, uh, u2)
+        Catalysis_a_(Cmax, u2_, xh, uh_)
+    |   Catalysis_b_(Cmax, xh, x2_, uh_, u2_)
+    |   U_(cx, uh_, u2_)
     |   X_(0, xh, x2_)
 )
 //---------------------------- Run Tests -------------------------------------
@@ -86,7 +92,7 @@ def Catalysis_(Cmax, cx, uh, xh, u2, x2_) =
 (* Unique domain (new) - The declaration of domains using new is similar to the declaration
 using dom, except that the domain Identifier is assumed to be unique to a given process *)
 
-    new uh  new xh
+    new uh  new xh  new uh_ new u2_
     new u2  new x2  new x2_
 
 (* Teste annihilation *) 
@@ -95,6 +101,6 @@ using dom, except that the domain Identifier is assumed to be unique to a given 
 
 
 (   
-    //Catalysis(Cmax, cx, uh, xh, u2, x2)
-   Catalysis_(Cmax, cx, uh, xh, u2, x2_)
+    Catalysis(Cmax, cx, uh, xh, u2, x2)
+   |Catalysis_(Cmax, cx, uh_, xh, u2_, x2_)
 )
