@@ -1,0 +1,151 @@
+(*  FeedBack Control Circuits 30/04/2020 
+Catálise: u -> u + x *)
+(* chamar tudo o que antes era X de u, chamar que antes Y por X*)
+(* LBS: directive sample 720000.0 10000 *)
+
+directive simulation {
+    initial=0;                   // Initial simulation time (default 0)
+    final=20000;                 // Final simulation time (200 horas)
+    points=10000;                // Number of simulation points to plot (default 1000)
+    //plots=[<uh_ u1_^ u2_ u3_^>;<xh x1_^ x2_ x3_^>;<uh u1^ u2 u3^>;<xh x1^ x2 x3^>]; //Plot Catalisys_
+    //plots=[<uh u1^ u2 u3^>;<xh x1^ x2 x3^>]; //Plot catalysis
+    //plots=[<xh x1_^ x2_ x3_^> ; <xh x1^ x2 x3^>]; //Plot Catalysis + Annihilation
+    kinetics = Contextual; 
+}
+
+(* Determinístico *)
+directive simulator deterministic
+
+directive compilation infinite
+
+(* Length default of 5 nucleotides to toeholds and 20nt to recognition domains *)
+directive lengths 5 20
+
+(* LBS: rate constants 20 Celsius *)
+directive parameters [
+    tb=1E-3;      // padrão do artigo = 1E-3      
+    tub=1E+1;  
+    c = 8E-4;     // padrão do artigo c = 8E-4    
+]
+
+
+(* Enable leaks and sets the rate of all leak reactions (default is 10-9 nM1s1) *)
+//directive leaks
+directive leak 5E-9     // rate constant of leak - 5E-9
+
+(* Sets the migration rate of a single nucleotide (default is 8000 s1) *)
+directive migrate 20   
+
+(*  FeedBack Control Circuits 30/04/2020 
+Catálise: u -> u + x *)
+(* chamar tudo o que antes era X de u, chamar que antes Y por X*)
+(* LBS: directive sample 720000.0 10000 *)
+
+directive simulation {
+    initial=0;                   // Initial simulation time (default 0)
+    final=20000;                 // Final simulation time (200 horas)
+    points=10000;                // Number of simulation points to plot (default 1000)
+    //plots=[<uh_ u1_^ u2_ u3_^>;<xh x1_^ x2_ x3_^>;<uh u1^ u2 u3^>;<xh x1^ x2 x3^>]; //Plot Catalisys_
+    //plots=[<uh u1^ u2 u3^>;<xh x1^ x2 x3^>]; //Plot catalysis
+    //plots=[<xh x1_^ x2_ x3_^> ; <xh x1^ x2 x3^>]; //Plot Catalysis + Annihilation
+    kinetics = Contextual; 
+}
+
+(* Determinístico *)
+directive simulator deterministic
+
+directive compilation infinite
+
+(* Length default of 5 nucleotides to toeholds and 20nt to recognition domains *)
+directive lengths 5 20
+
+(* LBS: rate constants 20 Celsius *)
+directive parameters [
+    kt=1E-3;      // padrão do artigo = 1E-3      
+    tub=1E+1;  
+    c = 8E-4;     // padrão do artigo c = 8E-4  
+    k = 1   
+]
+
+
+(* Enable leaks and sets the rate of all leak reactions (default is 10-9 nM1s1) *)
+//directive leaks
+directive leak 5E-9     // rate constant of leak - 5E-9
+
+(* Sets the migration rate of a single nucleotide (default is 8000 s1) *)
+directive migrate 20   
+
+dom x1 = {colour = "red"; bind = kt} 
+dom x1_ = {colour= "red"; bind = kt}
+dom x3 = {colour = "red"; bind = kt} 
+dom x3_ = {colour = "red"; bind = kt}
+dom r1 = {colour = "purple"; bind = kt} 
+dom r1_ = {colour = "purple"; bind = kt}
+dom r3 = {colour = "purple"; bind = kt} 
+dom r3_ = {colour = "purple"; bind = kt}
+dom e1 = {colour = "blue"; bind = kt} 
+dom e1_ = {colour = "blue"; bind = kt}
+dom e3 = {colour = "blue"; bind = kt} 
+dom e3_ = {colour = "blue"; bind = kt}
+dom v1 = {colour = "orange"; bind = kt} 
+dom v1_ = {colour = "orange"; bind = kt}
+dom v3 = {colour = "orange"; bind = kt} 
+dom v3_ = {colour = "orange"; bind = kt}
+dom y1 = {colour = "green"; bind = kt} 
+dom y1_ = {colour = "green"; bind = kt}
+dom y3 = {colour = "green"; bind = kt} 
+dom y3_ = {colour = "green"; bind = kt}
+dom load = {colour = "black"; bind = kt} 
+dom load_ = {colour = "black"; bind = kt}
+dom load = {colour = "black"; bind = kt} 
+dom load_ = {colour = "black"; bind = kt}
+dom t = {colour = "magenta"; bind = kt; unbind = tub}
+
+
+new xh new x2 new xh_ new x2_ new vh new v2 new vh_ new v2_ new yh new y2 new yh_ new y2_
+new rh new r2 new rh_ new r2_ new eh new e2 new eh_ new e2_
+
+def Signal0(cx,(xh,x1,x2,x3),x_) = cx * <xh x1^ x2 x3^>
+
+def Degradation0(Cmax, k,(xh,x1,x2,x3),x_) = Cmax/k * {x1^(c)*}[x2 x3^]
+
+def Annihilation0(Cmax, (xh,x1,x2,x3),(xh_,x1_,x2_,x3_)) =
+( Cmax * {x1^*}[x2 x3^ x1_^]:[x2_ x3_^]
+| Cmax * <x2 x3^ x1_^>
+| Cmax * {x1_^*}[x2_ x3_^ x1^]:[x2 x3^]
+| Cmax * <x2_ x3_^ x1^>
+)
+
+def Catalysis0(Cmax, k,(xh,x1,x2,x3),x_,(yh,y1,y2,y3),y_) =
+( Cmax*k * {x1^(c)*}[x2 x3^]<yh y1^ xh x1^>
+| Cmax*k * {x3^*}[yh y1^]<y2 y3^>:[xh x1^]<x2 x3^>
+)
+
+def Signal(cx,(x,x_)) = Signal0(cx,x,x_)
+def Degradation(Cmax, k,(x,x_)) = Degradation0(Cmax,k,x,x_)
+def Catalysis(Cmax, k,(x,x_),(y,y_)) = Catalysis0(Cmax, k,x,x_,y,y_)
+def Annihilation(Cmax, (x,x_)) = Annihilation0(Cmax, x,x_)
+def Signal_(cx,(x,x_)) = Signal(cx,(x_,x))
+def Degradation_(Cmax, k,(x,x_)) = Degradation(Cmax, k,(x_,x))
+def Catalysis_(Cmax, k,(x,x_),(y,y_)) = Catalysis(Cmax, k,(x_,x),(y_,y))
+def CatalysisInv(Cmax, k,x,(y,y_)) = Catalysis(Cmax, k,x,(y_,y))
+def CatalysisInv_(Cmax, k,(x,x_),y) = Catalysis(Cmax, k,(x_,x),y)
+
+def x = (xh,x1,x2,x3)
+def x_ = (xh_,x1_,x2_,x3_)
+def y = (yh,y1,y2,y3)
+def y_ = (yh_,y1_,y2_,y3_)
+def v = ((vh,v1,v2,v3),(vh_,v1_,v2_,v3_))
+def e = ((eh,e1,e2,e3),(eh_,e1_,e2_,e3_))
+def r = ((rh,r1,r2,r3),(rh_,r1_,r2_,r3_))
+
+def Cmax = 1000
+def cx = 1
+
+(
+Catalysis(Cmax, k, (x,x_), (y, y_))
+|Catalysis_(Cmax, k, (x,x_), (y, y_))
+|Signal(cx,(x, x_))
+|Signal_(cx,(x, x_))
+|Annihilation(Cmax, (x,x_))
+)
